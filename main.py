@@ -19,8 +19,10 @@ except FileNotFoundError:
     sleep(30)
     sys.exit(0)
 
-timeout = 900
 pages = 1
+cookies = {}
+xsrf_token = 0
+points = 0
 
 
 def get_soup_from_page(url):
@@ -28,9 +30,7 @@ def get_soup_from_page(url):
 
     cookies = {'PHPSESSID': cook}
     r = requests.get(url, cookies=cookies)
-    soup = BeautifulSoup(r.text, 'html.parser')
-
-    return soup
+    return BeautifulSoup(r.text, 'html.parser')
 
 
 def get_page():
@@ -54,7 +54,6 @@ def get_page():
 
 # get codes of the games
 def get_games():
-    global game_name
     global pages
 
     n = 1
@@ -70,7 +69,7 @@ def get_games():
             for item in gifts_list:
                 if int(points) == 0:
                     print('> Sleeping to get 6 points')
-                    sleep(timeout)
+                    sleep(900)
                     get_games()
                     break
 
@@ -88,63 +87,30 @@ def get_games():
                     print('Not enough points to enter: ' + game_name.decode("utf-8"))
                     continue
                 elif int(points) - int(game_cost) > 0:
-                    entry_gift(item.find('a', {'class': 'giveaway__heading__name'})['href'].split('/')[2])
+                    entry_gift(item.find('a', {'class': 'giveaway__heading__name'})['href'].split('/')[2], game_name)
 
             n = n + 1
         except AttributeError as e:
             break
 
-    print('List of games is ended. Waiting 2 min to update...')
-    sleep(120)
-    get_page()
-    get_games()
+    print('List of games ended. Exiting')
 
 
-def entry_gift(code):
+def entry_gift(code, game_name):
     payload = {'xsrf_token': xsrf_token, 'do': 'entry_insert', 'code': code}
     entry = requests.post('https://www.steamgifts.com/ajax.php', data=payload, cookies=cookies)
     json_data = json.loads(entry.text)
 
     get_page()
-    # print(json_data)
 
     # updating points after entered a giveaway
     if json_data['type'] == 'success':
         print('> Bot has entered giveaway: ' + game_name.decode("utf-8"))
-        sleep_time = randint(10, 100)
+        sleep_time = randint(10, 30)
         print("> Sleeping " + str(sleep_time) + " Seconds")
         sleep(sleep_time)
 
 
-def inputs_data():
-    global timeout
-    global pages
-
-    while 1:
-        cmd = input().split()
-        if cmd == '!help':
-            print(' [ HELP BOX ]')
-            print('!sleep [arg]\t- change a sleeping interval in sec (default is 900 sec)')
-            print('!page [arg]\t- set a final page')
-        if len(cmd) == 1:
-            print('!help to see available commands')
-        if cmd[0] == '!sleep':
-            try:
-                timeout = int(cmd[1])
-                print('Successfuly set interval to ' + str(timeout))
-            except ValueError:
-                print('Expect a digit!')
-
-        elif cmd[0] == '!page':
-            try:
-                pages = int(cmd[1])
-                print('Successfuly set final page to ' + str(pages))
-            except ValueError:
-                print('Expect a digit!')
-
-
 if __name__ == '__main__':
-    thread = threading.Thread(target=inputs_data)
-    thread.start()
     get_page()
     get_games()
