@@ -1,8 +1,7 @@
 import sys
 import requests
-from bs4 import BeautifulSoup
 import json
-import threading
+from bs4 import BeautifulSoup
 from requests import RequestException
 from random import randint
 from time import sleep
