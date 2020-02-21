@@ -31,6 +31,7 @@ def get_soup_from_page(url, cookie):
 
 # enter all games on one site
 def enter_games(page, cookies):
+    global points
     soup = get_soup_from_page(page, cookies)
 
     try:
@@ -53,6 +54,7 @@ def enter_games(page, cookies):
             elif points - int(game_cost) > 0:
                 enter_giveaway(item.find('a', {'class': 'giveaway__heading__name'})['href'].split('/')[2], game_name,
                                cookies)
+                points -= int(game_cost)
     except AttributeError as e:
         return
 
@@ -60,13 +62,20 @@ def enter_games(page, cookies):
 # get codes of the games
 def get_games(cookie):
     print("Proccessing games from wishlist.")
+    get_page(cookie)
     enter_games("https://www.steamgifts.com/giveaways/search?type=wishlist", cookie)
+    print(points)
     if points > 5:
         print("Proccessing all games.")
+        get_page(cookie)
         enter_games("https://www.steamgifts.com", cookie)
         n = 2
-        while points > 5:
+        while points > 5 and n < 5:
+            get_page(cookie)
             enter_games("https://www.steamgifts.com/giveaways/search?page=" + str(n), cookie)
+            print(n)
+            print(points)
+            sleep_time = randint(10, 30)
             n += 1
     print('Finished')
 
@@ -102,7 +111,6 @@ def enter_giveaway(code, game_name, cookies):
 
 def main():
     cookie = get_cookie()
-    get_page(cookie)
     get_games(cookie)
 
 
